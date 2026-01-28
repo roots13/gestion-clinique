@@ -31,73 +31,53 @@ public class PasswordUpdateInitializer {
     @PostConstruct
     @Transactional
     public void updateDefaultPasswords() {
-        logger.info("Vérification et mise à jour des mots de passe par défaut...");
+        try {
+            logger.info("Vérification et mise à jour des mots de passe par défaut...");
 
-        // Mise à jour admin
-        userRepository.findByUsername("admin").ifPresent(user -> {
-            user.setPassword(ADMIN_PASSWORD_HASH);
-            user.setEmail("admin@clinique.local");
-            user.setRole(Role.ADMIN);
-            user.setEnabled(true);
-            userRepository.save(user);
-            logger.info("Mot de passe admin mis à jour");
-        });
+            // Mise à jour admin
+            userRepository.findByUsername("admin").ifPresent(user -> {
+                user.setPassword(ADMIN_PASSWORD_HASH);
+                user.setEmail("admin@clinique.local");
+                user.setRole(Role.ADMIN);
+                user.setEnabled(true);
+                userRepository.save(user);
+                logger.info("Mot de passe admin mis à jour");
+            });
 
-        // Mise à jour accueil
-        userRepository.findByUsername("accueil").ifPresent(user -> {
-            user.setPassword(ACCUEIL_PASSWORD_HASH);
-            user.setEmail("accueil@clinique.local");
-            user.setRole(Role.ACCUEIL);
-            user.setEnabled(true);
-            userRepository.save(user);
-            logger.info("Mot de passe accueil mis à jour");
-        });
+            // Mise à jour accueil
+            userRepository.findByUsername("accueil").ifPresent(user -> {
+                user.setPassword(ACCUEIL_PASSWORD_HASH);
+                user.setEmail("accueil@clinique.local");
+                user.setRole(Role.ACCUEIL);
+                user.setEnabled(true);
+                userRepository.save(user);
+                logger.info("Mot de passe accueil mis à jour");
+            });
 
-        // Mise à jour medecin
-        userRepository.findByUsername("medecin").ifPresent(user -> {
-            user.setPassword(MEDECIN_PASSWORD_HASH);
-            user.setEmail("medecin@clinique.local");
-            user.setRole(Role.MEDECIN);
-            user.setEnabled(true);
-            userRepository.save(user);
-            logger.info("Mot de passe medecin mis à jour");
-        });
+            // Mise à jour médecin
+            userRepository.findByUsername("medecin").ifPresent(user -> {
+                user.setPassword(MEDECIN_PASSWORD_HASH);
+                user.setEmail("medecin@clinique.local");
+                user.setRole(Role.MEDECIN);
+                user.setEnabled(true);
+                userRepository.save(user);
+                logger.info("Mot de passe médecin mis à jour");
+            });
 
-        // Mise à jour caissier
-        userRepository.findByUsername("caissier").ifPresent(user -> {
-            user.setPassword(CAISSIER_PASSWORD_HASH);
-            user.setEmail("caissier@clinique.local");
-            user.setRole(Role.CAISSIER);
-            user.setEnabled(true);
-            userRepository.save(user);
-            logger.info("Mot de passe caissier mis à jour");
-        });
+            // Mise à jour caissier
+            userRepository.findByUsername("caissier").ifPresent(user -> {
+                user.setPassword(CAISSIER_PASSWORD_HASH);
+                user.setEmail("caissier@clinique.local");
+                user.setRole(Role.CAISSIER);
+                user.setEnabled(true);
+                userRepository.save(user);
+                logger.info("Mot de passe caissier mis à jour");
+            });
 
-        // Création des utilisateurs s'ils n'existent pas
-        if (!userRepository.existsByUsername("admin")) {
-            User admin = new User("admin", "admin@clinique.local", ADMIN_PASSWORD_HASH, Role.ADMIN);
-            userRepository.save(admin);
-            logger.info("Utilisateur admin créé");
+            logger.info("Mise à jour des mots de passe par défaut terminée");
+        } catch (Exception e) {
+            logger.warn("Erreur lors de la mise à jour des mots de passe par défaut: {}", e.getMessage());
+            // Ne pas arrêter l'application si la mise à jour échoue
         }
-
-        if (!userRepository.existsByUsername("accueil")) {
-            User accueil = new User("accueil", "accueil@clinique.local", ACCUEIL_PASSWORD_HASH, Role.ACCUEIL);
-            userRepository.save(accueil);
-            logger.info("Utilisateur accueil créé");
-        }
-
-        if (!userRepository.existsByUsername("medecin")) {
-            User medecin = new User("medecin", "medecin@clinique.local", MEDECIN_PASSWORD_HASH, Role.MEDECIN);
-            userRepository.save(medecin);
-            logger.info("Utilisateur medecin créé");
-        }
-
-        if (!userRepository.existsByUsername("caissier")) {
-            User caissier = new User("caissier", "caissier@clinique.local", CAISSIER_PASSWORD_HASH, Role.CAISSIER);
-            userRepository.save(caissier);
-            logger.info("Utilisateur caissier créé");
-        }
-
-        logger.info("Mise à jour des mots de passe terminée");
     }
 }

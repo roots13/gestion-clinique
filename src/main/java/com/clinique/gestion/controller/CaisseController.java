@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -26,8 +27,9 @@ public class CaisseController {
     private CaisseService caisseService;
 
     /**
-     * Enregistre un nouveau paiement
+     * Enregistre un nouveau paiement (ADMIN, CAISSIER)
      */
+    @PreAuthorize("hasAnyRole('ADMIN', 'CAISSIER')")
     @PostMapping
     public ResponseEntity<PaiementDTO> enregistrerPaiement(
             @Valid @RequestBody PaiementDTO paiementDTO,
@@ -37,8 +39,9 @@ public class CaisseController {
     }
 
     /**
-     * Récupère un paiement par son ID
+     * Récupère un paiement par son ID (ADMIN, CAISSIER)
      */
+    @PreAuthorize("hasAnyRole('ADMIN', 'CAISSIER')")
     @GetMapping("/{id}")
     public ResponseEntity<PaiementDTO> getPaiementById(@PathVariable Long id) {
         PaiementDTO paiement = caisseService.getPaiementById(id);
@@ -46,8 +49,9 @@ public class CaisseController {
     }
 
     /**
-     * Récupère un paiement par son numéro de reçu
+     * Récupère un paiement par son numéro de reçu (ADMIN, CAISSIER)
      */
+    @PreAuthorize("hasAnyRole('ADMIN', 'CAISSIER')")
     @GetMapping("/recu/{numeroRecu}")
     public ResponseEntity<PaiementDTO> getPaiementByNumeroRecu(@PathVariable String numeroRecu) {
         PaiementDTO paiement = caisseService.getPaiementByNumeroRecu(numeroRecu);
@@ -55,8 +59,9 @@ public class CaisseController {
     }
 
     /**
-     * Récupère tous les paiements d'un patient
+     * Récupère tous les paiements d'un patient (ADMIN, CAISSIER)
      */
+    @PreAuthorize("hasAnyRole('ADMIN', 'CAISSIER')")
     @GetMapping("/patient/{patientId}")
     public ResponseEntity<List<PaiementDTO>> getPaiementsByPatient(@PathVariable Long patientId) {
         List<PaiementDTO> paiements = caisseService.getPaiementsByPatient(patientId);
@@ -64,8 +69,9 @@ public class CaisseController {
     }
 
     /**
-     * Calcule le total des recettes pour une période
+     * Calcule le total des recettes pour une période (ADMIN, CAISSIER)
      */
+    @PreAuthorize("hasAnyRole('ADMIN', 'CAISSIER')")
     @GetMapping("/total")
     public ResponseEntity<BigDecimal> getTotalRecettes(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
@@ -75,8 +81,9 @@ public class CaisseController {
     }
 
     /**
-     * Récupère les paiements dans une période
+     * Récupère les paiements dans une période (ADMIN, CAISSIER)
      */
+    @PreAuthorize("hasAnyRole('ADMIN', 'CAISSIER')")
     @GetMapping("/periode")
     public ResponseEntity<List<PaiementDTO>> getPaiementsBetweenDates(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,

@@ -7,9 +7,13 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
+import org.springframework.http.HttpHeaders;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.io.ByteArrayOutputStream;
 
 /**
  * Controller REST pour la gestion des patients
@@ -23,8 +27,9 @@ public class PatientController {
     private PatientService patientService;
 
     /**
-     * Crée un nouveau patient
+     * Crée un nouveau patient (ADMIN, ACCUEIL, MEDECIN)
      */
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACCUEIL', 'MEDECIN')")
     @PostMapping
     public ResponseEntity<PatientDTO> createPatient(
             @Valid @RequestBody PatientDTO patientDTO,
@@ -34,8 +39,9 @@ public class PatientController {
     }
 
     /**
-     * Met à jour un patient
+     * Met à jour un patient (ADMIN, ACCUEIL, MEDECIN)
      */
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACCUEIL', 'MEDECIN')")
     @PutMapping("/{id}")
     public ResponseEntity<PatientDTO> updatePatient(
             @PathVariable Long id,
@@ -46,8 +52,9 @@ public class PatientController {
     }
 
     /**
-     * Récupère un patient par son ID
+     * Récupère un patient par son ID (ADMIN, ACCUEIL, MEDECIN)
      */
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACCUEIL', 'MEDECIN')")
     @GetMapping("/{id}")
     public ResponseEntity<PatientDTO> getPatientById(@PathVariable Long id) {
         PatientDTO patient = patientService.getPatientById(id);
@@ -55,8 +62,9 @@ public class PatientController {
     }
 
     /**
-     * Récupère un patient par son numéro
+     * Récupère un patient par son numéro (ADMIN, ACCUEIL, MEDECIN)
      */
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACCUEIL', 'MEDECIN')")
     @GetMapping("/numero/{numero}")
     public ResponseEntity<PatientDTO> getPatientByNumero(@PathVariable String numero) {
         PatientDTO patient = patientService.getPatientByNumero(numero);
@@ -64,8 +72,9 @@ public class PatientController {
     }
 
     /**
-     * Recherche des patients
+     * Recherche des patients (ADMIN, ACCUEIL, MEDECIN)
      */
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACCUEIL', 'MEDECIN')")
     @GetMapping("/search")
     public ResponseEntity<List<PatientDTO>> searchPatients(@RequestParam String q) {
         List<PatientDTO> patients = patientService.searchPatients(q);
@@ -73,8 +82,9 @@ public class PatientController {
     }
 
     /**
-     * Récupère tous les patients
+     * Récupère tous les patients (ADMIN, ACCUEIL, MEDECIN)
      */
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACCUEIL', 'MEDECIN')")
     @GetMapping
     public ResponseEntity<List<PatientDTO>> getAllPatients() {
         List<PatientDTO> patients = patientService.getAllPatients();
@@ -82,11 +92,34 @@ public class PatientController {
     }
 
     /**
-     * Supprime un patient
+     * Supprime un patient (ADMIN, ACCUEIL, MEDECIN)
      */
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACCUEIL', 'MEDECIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePatient(@PathVariable Long id, HttpServletRequest request) {
         patientService.deletePatient(id, request);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Télécharge le dossier patient en PDF (ADMIN, ACCUEIL, MEDECIN)
+     */
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACCUEIL', 'MEDECIN')")
+    @GetMapping("/{id}/download")
+    public ResponseEntity<byte[]> downloadPatientDossier(@PathVariable Long id) {
+        try {
+            byte[] pdfBytes = patientService.generatePatientDossierPDF(id);
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDisposition(org.springframework.http.ContentDisposition
+                    .attachment()
+                    .filename("dossier_patient_" + id + ".pdf")
+                    .build());
+            
+            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }

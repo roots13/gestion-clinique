@@ -14,7 +14,6 @@ public class PatientDTO {
 
     private Long id;
 
-    @NotBlank(message = "Le numéro patient est obligatoire")
     @Size(max = 20)
     private String numero;
 

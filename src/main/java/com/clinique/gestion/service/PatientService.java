@@ -5,11 +5,21 @@ import com.clinique.gestion.entity.Patient;
 import com.clinique.gestion.exception.ResourceNotFoundException;
 import com.clinique.gestion.repository.PatientRepository;
 import com.clinique.gestion.util.NumeroGenerator;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Element;
+import com.itextpdf.text.Font;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.pdf.PdfPCell;
+import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfWriter;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.ByteArrayOutputStream;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -172,5 +182,67 @@ public class PatientService {
         patient.setTelephone(dto.getTelephone());
         patient.setAdresse(dto.getAdresse());
         return patient;
+    }
+
+    /**
+     * Génère un PDF du dossier patient
+     */
+    public byte[] generatePatientDossierPDF(Long patientId) throws Exception {
+        Patient patient = patientRepository.findById(patientId)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", patientId));
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        Document document = new Document();
+        PdfWriter.getInstance(document, baos);
+        document.open();
+
+        // Titre
+        Font titleFont = new Font(Font.FontFamily.HELVETICA, 18, Font.BOLD);
+        Paragraph title = new Paragraph("DOSSIER PATIENT", titleFont);
+        title.setAlignment(Element.ALIGN_CENTER);
+        document.add(title);
+
+        document.add(new Paragraph(" "));
+
+        // Informations personnelles
+        Font headingFont = new Font(Font.FontFamily.HELVETICA, 14, Font.BOLD);
+        Paragraph heading = new Paragraph("Informations Personnelles", headingFont);
+        document.add(heading);
+
+        // Tableau des informations
+        PdfPTable table = new PdfPTable(2);
+        table.setWidthPercentage(100);
+
+        // Ajouter les lignes du tableau
+        addTableRow(table, "Numéro Patient:", patient.getNumero());
+        addTableRow(table, "Nom:", patient.getNom());
+        addTableRow(table, "Prénom:", patient.getPrenom());
+        addTableRow(table, "Date de Naissance:", patient.getDateNaissance() != null ? patient.getDateNaissance().toString() : "");
+        addTableRow(table, "Téléphone:", patient.getTelephone() != null ? patient.getTelephone() : "-");
+        addTableRow(table, "Adresse:", patient.getAdresse() != null ? patient.getAdresse() : "-");
+
+        document.add(table);
+        document.add(new Paragraph(" "));
+
+        // Date de génération
+        Font smallFont = new Font(Font.FontFamily.HELVETICA, 10, Font.ITALIC);
+        Paragraph footer = new Paragraph("Document généré le: " + LocalDateTime.now(), smallFont);
+        document.add(footer);
+
+        document.close();
+        return baos.toByteArray();
+    }
+
+    /**
+     * Ajoute une ligne dans le tableau PDF
+     */
+    private void addTableRow(PdfPTable table, String label, String value) {
+        PdfPCell cellLabel = new PdfPCell(new Paragraph(label));
+        cellLabel.setPadding(5);
+        table.addCell(cellLabel);
+
+        PdfPCell cellValue = new PdfPCell(new Paragraph(value != null ? value : ""));
+        cellValue.setPadding(5);
+        table.addCell(cellValue);
     }
 }

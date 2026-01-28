@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,8 +24,9 @@ public class TicketController {
     private TicketService ticketService;
 
     /**
-     * Crée un nouveau ticket pour un patient
+     * Crée un nouveau ticket pour un patient (ADMIN, ACCUEIL, MEDECIN)
      */
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACCUEIL', 'MEDECIN')")
     @PostMapping
     public ResponseEntity<TicketDTO> createTicket(
             @RequestParam Long patientId,
@@ -35,8 +37,9 @@ public class TicketController {
     }
 
     /**
-     * Met à jour le statut d'un ticket
+     * Met à jour le statut d'un ticket (ADMIN, ACCUEIL, MEDECIN)
      */
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACCUEIL', 'MEDECIN')")
     @PutMapping("/{id}/statut")
     public ResponseEntity<TicketDTO> updateTicketStatut(
             @PathVariable Long id,
@@ -47,8 +50,9 @@ public class TicketController {
     }
 
     /**
-     * Récupère un ticket par son ID
+     * Récupère un ticket par son ID (ADMIN, ACCUEIL, MEDECIN)
      */
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACCUEIL', 'MEDECIN')")
     @GetMapping("/{id}")
     public ResponseEntity<TicketDTO> getTicketById(@PathVariable Long id) {
         TicketDTO ticket = ticketService.getTicketById(id);
@@ -56,8 +60,9 @@ public class TicketController {
     }
 
     /**
-     * Récupère la file d'attente d'un service
+     * Récupère la file d'attente d'un service (ADMIN, ACCUEIL, MEDECIN)
      */
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACCUEIL', 'MEDECIN')")
     @GetMapping("/queue/{service}")
     public ResponseEntity<List<TicketDTO>> getQueueByService(@PathVariable String service) {
         List<TicketDTO> queue = ticketService.getQueueByService(service);
@@ -65,8 +70,9 @@ public class TicketController {
     }
 
     /**
-     * Récupère tous les tickets d'un service
+     * Récupère tous les tickets d'un service (ADMIN, ACCUEIL, MEDECIN)
      */
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACCUEIL', 'MEDECIN')")
     @GetMapping("/service/{service}")
     public ResponseEntity<List<TicketDTO>> getTicketsByService(@PathVariable String service) {
         List<TicketDTO> tickets = ticketService.getTicketsByService(service);
@@ -74,8 +80,9 @@ public class TicketController {
     }
 
     /**
-     * Récupère tous les tickets d'un patient
+     * Récupère tous les tickets d'un patient (ADMIN, ACCUEIL, MEDECIN)
      */
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACCUEIL', 'MEDECIN')")
     @GetMapping("/patient/{patientId}")
     public ResponseEntity<List<TicketDTO>> getTicketsByPatient(@PathVariable Long patientId) {
         List<TicketDTO> tickets = ticketService.getTicketsByPatient(patientId);
@@ -83,8 +90,9 @@ public class TicketController {
     }
 
     /**
-     * Récupère tous les tickets par statut
+     * Récupère tous les tickets par statut (ADMIN, ACCUEIL, MEDECIN)
      */
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACCUEIL', 'MEDECIN')")
     @GetMapping("/statut/{statut}")
     public ResponseEntity<List<TicketDTO>> getTicketsByStatut(@PathVariable StatutTicket statut) {
         List<TicketDTO> tickets = ticketService.getTicketsByStatut(statut);
@@ -92,8 +100,9 @@ public class TicketController {
     }
 
     /**
-     * Récupère le prochain ticket en attente pour un service
+     * Récupère le prochain ticket en attente pour un service (ADMIN, ACCUEIL, MEDECIN)
      */
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACCUEIL', 'MEDECIN')")
     @GetMapping("/next/{service}")
     public ResponseEntity<TicketDTO> getNextTicket(@PathVariable String service) {
         TicketDTO ticket = ticketService.getNextTicket(service);

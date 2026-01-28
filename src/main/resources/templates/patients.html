@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patients - Gestion Clinique</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 24px; }
+        .user-info { display: flex; gap: 15px; }
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .btn { display: inline-block; padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; border: none; cursor: pointer; }
+        .btn:hover { background: #5568d3; }
+        .btn-secondary { background: #95a5a6; }
+        .btn-secondary:hover { background: #7f8c8d; }
+        .table-container { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #f8f9fa; font-weight: 600; }
+        .search-box { margin-bottom: 20px; }
+        .search-box input { padding: 10px; border: 1px solid #ddd; border-radius: 5px; width: 300px; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 8px; width: 90%; max-width: 500px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏥 Gestion des Patients</h1>
+        <div class="user-info">
+            <span id="username"></span>
+            <a href="/dashboard" class="btn btn-secondary">← Retour</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div style="margin-bottom: 20px;">
+            <button class="btn" onclick="openModal()">➕ Ajouter Patient</button>
+        </div>
+
+        <div class="search-box">
+            <input type="text" id="search" placeholder="Rechercher un patient..." onkeyup="searchPatients()">
+        </div>
+
+        <div class="table-container">
+            <table id="patientsTable">
+                <thead>
+                    <tr>
+                        <th>Numéro</th>
+                        <th>Nom</th>
+                        <th>Prénom</th>
+                        <th>Date de naissance</th>
+                        <th>Téléphone</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="patientsList">
+                    <tr><td colspan="6" style="text-align: center;">Chargement...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="patientModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Ajouter un Patient</h2>
+            <form onsubmit="savePatient(event)">
+                <div class="form-group">
+                    <label>Numéro</label>
+                    <input type="text" id="patientNumero" placeholder="Auto-généré" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Nom</label>
+                    <input type="text" id="patientNom" required>
+                </div>
+                <div class="form-group">
+                    <label>Prénom</label>
+                    <input type="text" id="patientPrenom" required>
+                </div>
+                <div class="form-group">
+                    <label>Date de naissance</label>
+                    <input type="date" id="patientDate" required>
+                </div>
+                <div class="form-group">
+                    <label>Téléphone</label>
+                    <input type="tel" id="patientTelephone">
+                </div>
+                <div class="form-group">
+                    <label>Adresse</label>
+                    <input type="text" id="patientAdresse">
+                </div>
+                <button type="submit" class="btn">Enregistrer</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = '/login';
+
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        document.getElementById('username').textContent = user.username;
+
+        async function loadPatients() {
+            try {
+                const response = await fetch('/api/patients', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const patients = await response.json();
+                const tbody = document.getElementById('patientsList');
+                tbody.innerHTML = patients.length ? patients.map(p => `
+                    <tr>
+                        <td>${p.numero}</td>
+                        <td>${p.nom}</td>
+                        <td>${p.prenom}</td>
+                        <td>${p.dateNaissance}</td>
+                        <td>${p.telephone}</td>
+                        <td>
+                            <button class="btn" style="padding: 5px 10px; font-size: 12px; margin-right: 5px; background: #27ae60;" onclick="viewPatient(${p.id})">Dossier</button>
+                            <button class="btn" style="padding: 5px 10px; font-size: 12px; margin-right: 5px;" onclick="editPatient(${p.id})">Modifier</button>
+                            <button class="btn" style="padding: 5px 10px; font-size: 12px; background: #e74c3c;" onclick="deletePatient(${p.id})">Supprimer</button>
+                        </td>
+                    </tr>
+                `).join('') : '<tr><td colspan="6" style="text-align: center;">Aucun patient</td></tr>';
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function openModal() {
+            document.getElementById('modalTitle').textContent = 'Ajouter un Patient';
+            document.getElementById('patientNumero').value = '';
+            document.getElementById('patientNom').value = '';
+            document.getElementById('patientPrenom').value = '';
+            document.getElementById('patientDate').value = '';
+            document.getElementById('patientTelephone').value = '';
+            document.getElementById('patientAdresse').value = '';
+            delete document.getElementById('patientModal').dataset.patientId;
+            document.getElementById('patientModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('patientModal').style.display = 'none';
+        }
+
+        async function savePatient(e) {
+            e.preventDefault();
+            const patient = {
+                numero: null,
+                nom: document.getElementById('patientNom').value,
+                prenom: document.getElementById('patientPrenom').value,
+                dateNaissance: document.getElementById('patientDate').value,
+                telephone: document.getElementById('patientTelephone').value,
+                adresse: document.getElementById('patientAdresse').value
+            };
+
+            try {
+                const patientId = document.getElementById('patientModal').dataset.patientId;
+                const method = patientId ? 'PUT' : 'POST';
+                const url = patientId ? '/api/patients/' + patientId : '/api/patients';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(patient)
+                });
+                if (response.ok) {
+                    closeModal();
+                    delete document.getElementById('patientModal').dataset.patientId;
+                    document.getElementById('modalTitle').textContent = 'Ajouter un Patient';
+                    loadPatients();
+                    alert('Patient enregistré avec succès');
+                } else {
+                    alert('Erreur lors de l\'enregistrement');
+                }
+            } catch (e) {
+                alert('Erreur: ' + e.message);
+            }
+        }
+
+        function searchPatients() {
+            const q = document.getElementById('search').value;
+            if (q.length > 0) {
+                fetch('/api/patients/search?q=' + q, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                }).then(r => r.json()).then(patients => {
+                    const tbody = document.getElementById('patientsList');
+                    tbody.innerHTML = patients.map(p => `
+                        <tr>
+                            <td>${p.numero}</td>
+                            <td>${p.nom}</td>
+                            <td>${p.prenom}</td>
+                            <td>${p.dateNaissance}</td>
+                            <td>${p.telephone}</td>
+                            <td><button class="btn" style="padding: 5px 10px; font-size: 12px; margin-right: 5px;" onclick="editPatient(${p.id})">Modifier</button><button class="btn" style="padding: 5px 10px; font-size: 12px; background: #e74c3c;" onclick="deletePatient(${p.id})">Supprimer</button></td>
+                        </tr>
+                    `).join('');
+                });
+            } else {
+                loadPatients();
+            }
+        }
+
+        async function editPatient(id) {
+            try {
+                const response = await fetch('/api/patients/' + id, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const patient = await response.json();
+                document.getElementById('modalTitle').textContent = 'Modifier Patient';
+                document.getElementById('patientNumero').value = patient.numero;
+                document.getElementById('patientNom').value = patient.nom;
+                document.getElementById('patientPrenom').value = patient.prenom;
+                document.getElementById('patientDate').value = patient.dateNaissance;
+                document.getElementById('patientTelephone').value = patient.telephone || '';
+                document.getElementById('patientAdresse').value = patient.adresse || '';
+                document.getElementById('patientModal').dataset.patientId = id;
+                document.getElementById('patientModal').style.display = 'flex';
+            } catch (e) {
+                alert('Erreur lors du chargement du patient: ' + e.message);
+            }
+        }
+
+        async function deletePatient(id) {
+            if (!confirm('Êtes-vous sûr de vouloir supprimer ce patient?')) return;
+            try {
+                const response = await fetch('/api/patients/' + id, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (response.ok) {
+                    loadPatients();
+                    alert('Patient supprimé avec succès');
+                } else {
+                    alert('Erreur lors de la suppression');
+                }
+            } catch (e) {
+                alert('Erreur: ' + e.message);
+            }
+        }
+
+        function viewPatient(id) {
+            window.location.href = '/patient-dossier?id=' + id;
+        }
+
+        loadPatients();
+        window.onclick = function(event) {
+            const modal = document.getElementById('patientModal');
+            if (event.target === modal) modal.style.display = 'none';
+        }
+    </script>
+</body>
+</html>

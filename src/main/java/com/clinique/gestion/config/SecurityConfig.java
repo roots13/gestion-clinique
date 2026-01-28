@@ -53,13 +53,17 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Endpoints publics
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/", "/login", "/css/**", "/js/**", "/images/**").permitAll()
+                .requestMatchers("/", "/login", "/forgot-password", "/reset-password", "/css/**", "/js/**", "/images/**").permitAll()
                 
                 // Endpoints API nécessitant une authentification
                 .requestMatchers("/api/patients/**").hasAnyRole("ADMIN", "ACCUEIL", "MEDECIN")
                 .requestMatchers("/api/tickets/**").hasAnyRole("ADMIN", "ACCUEIL", "MEDECIN")
                 .requestMatchers("/api/consultations/**").hasAnyRole("ADMIN", "MEDECIN")
                 .requestMatchers("/api/paiements/**").hasAnyRole("ADMIN", "CAISSIER")
+                
+                // Endpoints utilisateurs - profil personnel accessible à tous les utilisateurs authentifiés
+                .requestMatchers("/api/users/me", "/api/users/me/**").authenticated()
+                // Gestion des utilisateurs - Admin seulement
                 .requestMatchers("/api/users/**").hasRole("ADMIN")
                 .requestMatchers("/api/audit/**").hasRole("ADMIN")
                 

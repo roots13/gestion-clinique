@@ -34,6 +34,30 @@
             align-items: center;
             gap: 15px;
         }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .settings-btn,
+        .logout-btn {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: all 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+        }
+
+        .settings-btn:hover,
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
         
         .container {
             max-width: 1200px;
@@ -105,34 +129,49 @@
         <h1>🏥 Gestion Clinique</h1>
         <div class="user-info">
             <span id="username"></span>
-            <a href="/login" class="logout-btn" onclick="localStorage.clear()">Déconnexion</a>
+            <div class="user-menu">
+                <a href="/settings" class="settings-btn">⚙️ Paramètres</a>
+                <a href="/login" class="logout-btn" onclick="localStorage.clear()">Déconnexion</a>
+            </div>
         </div>
     </div>
     
     <div class="container">
         <div class="cards">
-            <div class="card">
+            <div class="card" id="patients-card" style="display: none;">
                 <h3>👥 Patients</h3>
                 <p>Gérer les dossiers patients</p>
-                <a href="#" class="btn">Accéder</a>
+                <a href="/patients" class="btn">Accéder</a>
             </div>
             
-            <div class="card">
+            <div class="card" id="tickets-card" style="display: none;">
                 <h3>🎫 Tickets</h3>
                 <p>Gérer la file d'attente</p>
-                <a href="#" class="btn">Accéder</a>
+                <a href="/tickets" class="btn">Accéder</a>
             </div>
             
-            <div class="card">
+            <div class="card" id="caisse-card" style="display: none;">
                 <h3>💰 Caisse</h3>
                 <p>Enregistrer les paiements</p>
-                <a href="#" class="btn">Accéder</a>
+                <a href="/caisse" class="btn">Accéder</a>
             </div>
             
-            <div class="card">
+            <div class="card" id="consultations-card" style="display: none;">
                 <h3>📋 Consultations</h3>
                 <p>Historique des consultations</p>
-                <a href="#" class="btn">Accéder</a>
+                <a href="/consultations" class="btn">Accéder</a>
+            </div>
+
+            <div class="card" id="users-card" style="display: none;">
+                <h3>🔑 Utilisateurs</h3>
+                <p>Gérer les comptes utilisateurs</p>
+                <a href="/users" class="btn">Accéder</a>
+            </div>
+
+            <div class="card" id="settings-card">
+                <h3>⚙️ Paramètres</h3>
+                <p>Gérer mon profil et mon mot de passe</p>
+                <a href="/settings" class="btn">Accéder</a>
             </div>
         </div>
     </div>
@@ -143,6 +182,34 @@
         if (userStr) {
             const user = JSON.parse(userStr);
             document.getElementById('username').textContent = user.username + ' (' + user.role + ')';
+            
+            // Afficher les cartes selon le rôle
+            const role = user.role;
+            
+            // Patients - ADMIN, ACCUEIL, MEDECIN
+            if (['ADMIN', 'ACCUEIL', 'MEDECIN'].includes(role)) {
+                document.getElementById('patients-card').style.display = 'block';
+            }
+            
+            // Tickets - ADMIN, ACCUEIL, MEDECIN
+            if (['ADMIN', 'ACCUEIL', 'MEDECIN'].includes(role)) {
+                document.getElementById('tickets-card').style.display = 'block';
+            }
+            
+            // Caisse - ADMIN, CAISSIER
+            if (['ADMIN', 'CAISSIER'].includes(role)) {
+                document.getElementById('caisse-card').style.display = 'block';
+            }
+            
+            // Consultations - ADMIN, MEDECIN
+            if (['ADMIN', 'MEDECIN'].includes(role)) {
+                document.getElementById('consultations-card').style.display = 'block';
+            }
+            
+            // Utilisateurs - ADMIN seulement
+            if (role === 'ADMIN') {
+                document.getElementById('users-card').style.display = 'block';
+            }
         } else {
             // Rediriger vers la page de connexion si non authentifié
             window.location.href = '/login';

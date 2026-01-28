@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paramètres - Gestion de Clinique</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section h2 {
+            color: #667eea;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="password"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .btn-logout {
+            background: #ff6b6b;
+            color: white;
+            margin-top: 20px;
+        }
+
+        .btn-logout:hover {
+            background: #ee5a52;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .back-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .back-link a:hover {
+            color: #764ba2;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .user-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .user-info p {
+            margin: 10px 0;
+        }
+
+        .user-info strong {
+            color: #667eea;
+        }
+
+        .password-requirements {
+            background: #e3f2fd;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+
+        .password-requirements h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .password-requirements ul {
+            margin-left: 20px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Paramètres</h1>
+            <p>Gérez votre profil et votre mot de passe</p>
+        </header>
+
+        <div class="content">
+            <div class="back-link">
+                <a href="/dashboard">← Retour au tableau de bord</a>
+            </div>
+
+            <div id="alert" class="alert"></div>
+
+            <!-- Informations Utilisateur -->
+            <div class="section">
+                <h2>Mes informations</h2>
+                <div id="loadingUser" class="loading">
+                    <div class="spinner"></div>
+                    <p>Chargement...</p>
+                </div>
+                <div id="userContent" style="display: none;">
+                    <div class="user-info">
+                        <p><strong>Nom d'utilisateur:</strong> <span id="displayUsername"></span></p>
+                        <p><strong>Email:</strong> <span id="displayEmail"></span></p>
+                        <p><strong>Nom:</strong> <span id="displayNom"></span></p>
+                        <p><strong>Prénom:</strong> <span id="displayPrenom"></span></p>
+                        <p><strong>Rôle:</strong> <span id="displayRole"></span></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Changement de Mot de Passe -->
+            <div class="section">
+                <h2>Changer mon mot de passe</h2>
+                <form id="passwordForm">
+                    <div class="form-group">
+                        <label for="oldPassword">Ancien mot de passe *</label>
+                        <input type="password" id="oldPassword" name="oldPassword" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="newPassword">Nouveau mot de passe *</label>
+                        <input type="password" id="newPassword" name="newPassword" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirmer le nouveau mot de passe *</label>
+                        <input type="password" id="confirmPassword" name="confirmPassword" required>
+                    </div>
+
+                    <div class="password-requirements">
+                        <h4>Exigences du mot de passe:</h4>
+                        <ul>
+                            <li>Minimum 8 caractères</li>
+                            <li>Au moins une lettre majuscule</li>
+                            <li>Au moins une lettre minuscule</li>
+                            <li>Au moins un chiffre</li>
+                        </ul>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="submit" class="btn-primary">Changer le mot de passe</button>
+                        <button type="reset" class="btn-secondary">Annuler</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Déconnexion -->
+            <div class="section">
+                <h2>Sécurité</h2>
+                <p>Cliquez sur le bouton ci-dessous pour vous déconnecter et terminer votre session.</p>
+                <button class="btn-logout" onclick="logout()">Se déconnecter</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            window.location.href = '/login';
+        }
+
+        // Charger les informations utilisateur
+        function loadUserInfo() {
+            fetch('/api/users/me', {
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            })
+            .then(response => {
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+                return response.json();
+            })
+            .then(user => {
+                document.getElementById('displayUsername').textContent = user.username;
+                document.getElementById('displayEmail').textContent = user.email;
+                document.getElementById('displayNom').textContent = user.nom || 'Non renseigné';
+                document.getElementById('displayPrenom').textContent = user.prenom || 'Non renseigné';
+                document.getElementById('displayRole').textContent = user.role;
+
+                document.getElementById('loadingUser').style.display = 'none';
+                document.getElementById('userContent').style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                document.getElementById('loadingUser').innerHTML = '<p>Erreur lors du chargement des informations</p>';
+            });
+        }
+
+        // Valider le mot de passe
+        function validatePassword(password) {
+            if (password.length < 8) {
+                return false;
+            }
+            if (!/[A-Z]/.test(password)) {
+                return false;
+            }
+            if (!/[a-z]/.test(password)) {
+                return false;
+            }
+            if (!/[0-9]/.test(password)) {
+                return false;
+            }
+            return true;
+        }
+
+        // Soumettre le formulaire de changement de mot de passe
+        document.getElementById('passwordForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const oldPassword = document.getElementById('oldPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            // Validation
+            if (newPassword !== confirmPassword) {
+                showAlert('Les mots de passe ne correspondent pas', 'error');
+                return;
+            }
+
+            if (!validatePassword(newPassword)) {
+                showAlert('Le mot de passe ne respecte pas les exigences', 'error');
+                return;
+            }
+
+            // Envoyer la requête
+            fetch('/api/users/me/change-password', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    oldPassword: oldPassword,
+                    newPassword: newPassword
+                })
+            })
+            .then(response => {
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+                if (response.status === 400) {
+                    return response.json().then(data => {
+                        throw new Error(data.message || 'Erreur lors du changement du mot de passe');
+                    });
+                }
+                if (!response.ok) {
+                    throw new Error('Erreur lors du changement du mot de passe');
+                }
+                return response.json();
+            })
+            .then(data => {
+                showAlert('Mot de passe changé avec succès', 'success');
+                document.getElementById('passwordForm').reset();
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                showAlert(error.message || 'Erreur lors du changement du mot de passe', 'error');
+            });
+        });
+
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.textContent = message;
+            alert.className = 'alert ' + type;
+            alert.style.display = 'block';
+
+            if (type === 'success') {
+                setTimeout(() => {
+                    alert.style.display = 'none';
+                }, 3000);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+        }
+
+        // Charger les informations au démarrage
+        document.addEventListener('DOMContentLoaded', loadUserInfo);
+    </script>
+</body>
+</html>

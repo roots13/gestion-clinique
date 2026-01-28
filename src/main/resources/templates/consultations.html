@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultations - Gestion Clinique</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 24px; }
+        .user-info { display: flex; gap: 15px; }
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .btn { display: inline-block; padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; border: none; cursor: pointer; }
+        .btn:hover { background: #5568d3; }
+        .btn-secondary { background: #95a5a6; }
+        .btn-secondary:hover { background: #7f8c8d; }
+        .table-container { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #f8f9fa; font-weight: 600; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 8px; width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; }
+        .form-group input, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-family: inherit; }
+        .form-group textarea { resize: vertical; height: 100px; }
+        .search-box { position: relative; }
+        .search-results { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-top: none; max-height: 200px; overflow-y: auto; display: none; z-index: 1000; }
+        .search-results.active { display: block; }
+        .search-result-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; }
+        .search-result-item:hover { background: #f5f5f5; }
+        .search-result-item.selected { background: #667eea; color: white; }
+        .selected-patient { background: #e8f5e9; padding: 10px; border-radius: 5px; margin-top: 10px; display: none; }
+        .selected-patient.active { display: block; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📋 Consultations</h1>
+        <div class="user-info">
+            <span id="username"></span>
+            <a href="/dashboard" class="btn btn-secondary">← Retour</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div style="margin-bottom: 20px;">
+            <button class="btn" onclick="openModal()">➕ Nouvelle Consultation</button>
+        </div>
+
+        <div class="table-container">
+            <table id="consultationsTable">
+                <thead>
+                    <tr>
+                        <th>Patient</th>
+                        <th>Médecin</th>
+                        <th>Date</th>
+                        <th>Diagnostic</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="consultationsList">
+                    <tr><td colspan="5" style="text-align: center;">Chargement...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="consultationModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Nouvelle Consultation</h2>
+            <form onsubmit="saveConsultation(event)">
+                <div class="form-group search-box">
+                    <label>Patient</label>
+                    <input type="text" id="patientSearch" placeholder="Chercher un patient par nom ou numéro..." onkeyup="searchPatients(event)">
+                    <div id="patientResults" class="search-results"></div>
+                    <input type="hidden" id="consultationPatientId" required>
+                </div>
+                <div id="selectedPatientInfo" class="selected-patient">
+                    <strong>Patient sélectionné: </strong><span id="selectedPatientName"></span>
+                </div>
+                <div class="form-group">
+                    <label>Médecin ID</label>
+                    <input type="number" id="consultationMedecinId" required>
+                </div>
+                <div class="form-group">
+                    <label>Motif</label>
+                    <textarea id="consultationMotif" placeholder="Motif de la consultation..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Diagnostic</label>
+                    <textarea id="consultationDiagnostic" placeholder="Diagnostic établi..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Prescription/Traitement</label>
+                    <textarea id="consultationPrescription" placeholder="Prescription médicale..." required></textarea>
+                </div>
+                <button type="submit" class="btn">Enregistrer</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = '/login';
+
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        document.getElementById('username').textContent = user.username;
+
+        async function loadConsultations() {
+            try {
+                const response = await fetch('/api/consultations', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const consultations = await response.json();
+                const tbody = document.getElementById('consultationsList');
+                tbody.innerHTML = consultations.length ? consultations.map(c => `
+                    <tr>
+                        <td>${c.patientNom}</td>
+                        <td>${c.medecinNom}</td>
+                        <td>${new Date(c.createdAt).toLocaleDateString()}</td>
+                        <td>${c.diagnostic ? c.diagnostic.substring(0, 50) + '...' : '-'}</td>
+                        <td>
+                            <button class="btn" style="padding: 5px 10px; font-size: 12px;" onclick="viewConsultation(${c.id})">Voir</button>
+                        </td>
+                    </tr>
+                `).join('') : '<tr><td colspan="5" style="text-align: center;">Aucune consultation</td></tr>';
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function openModal() {
+            document.getElementById('consultationModal').style.display = 'flex';
+            document.getElementById('modalTitle').textContent = 'Nouvelle Consultation';
+            document.getElementById('patientSearch').value = '';
+            document.getElementById('consultationPatientId').value = '';
+            document.getElementById('consultationMedecinId').value = '';
+            document.getElementById('consultationMotif').value = '';
+            document.getElementById('consultationDiagnostic').value = '';
+            document.getElementById('consultationPrescription').value = '';
+            document.getElementById('patientResults').classList.remove('active');
+            document.getElementById('selectedPatientInfo').classList.remove('active');
+        }
+
+        async function searchPatients(event) {
+            const query = document.getElementById('patientSearch').value;
+            const resultsDiv = document.getElementById('patientResults');
+            
+            if (query.length < 2) {
+                resultsDiv.classList.remove('active');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/patients/search?q=' + encodeURIComponent(query), {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const patients = await response.json();
+                
+                if (patients.length === 0) {
+                    resultsDiv.innerHTML = '<div class="search-result-item">Aucun patient trouvé</div>';
+                } else {
+                    resultsDiv.innerHTML = patients.map(p => `
+                        <div class="search-result-item" onclick="selectPatient(${p.id}, '${p.numero} - ${p.nom} ${p.prenom}')">
+                            <strong>${p.numero}</strong> - ${p.nom} ${p.prenom}
+                        </div>
+                    `).join('');
+                }
+                resultsDiv.classList.add('active');
+            } catch (e) {
+                resultsDiv.innerHTML = '<div class="search-result-item">Erreur de recherche</div>';
+            }
+        }
+
+        function selectPatient(patientId, patientName) {
+            document.getElementById('consultationPatientId').value = patientId;
+            document.getElementById('patientSearch').value = patientName;
+            document.getElementById('selectedPatientName').textContent = patientName;
+            document.getElementById('selectedPatientInfo').classList.add('active');
+            document.getElementById('patientResults').classList.remove('active');
+        }
+
+        function closeModal() {
+            document.getElementById('consultationModal').style.display = 'none';
+        }
+
+        async function saveConsultation(e) {
+            e.preventDefault();
+            const patientId = document.getElementById('consultationPatientId').value;
+            const medecinId = document.getElementById('consultationMedecinId').value;
+            const data = {
+                diagnostic: document.getElementById('consultationDiagnostic').value,
+                prescription: document.getElementById('consultationPrescription').value,
+                motif: document.getElementById('consultationMotif').value
+            };
+
+            try {
+                const response = await fetch(`/api/consultations?patientId=${patientId}&medecinId=${medecinId}`, {
+                    method: 'POST',
+                    headers: { 
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                if (response.ok) {
+                    closeModal();
+                    loadConsultations();
+                    alert('Consultation enregistrée avec succès');
+                } else {
+                    alert('Erreur lors de l\'enregistrement');
+                }
+            } catch (e) {
+                alert('Erreur: ' + e.message);
+            }
+        }
+
+        async function viewConsultation(id) {
+            try {
+                const response = await fetch(`/api/consultations/${id}`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const c = await response.json();
+                alert(`Consultation du ${new Date(c.createdAt).toLocaleDateString()}\n\nDiagnostic:\n${c.diagnostic}\n\nPrescription:\n${c.prescription}`);
+            } catch (e) {
+                alert('Erreur: ' + e.message);
+            }
+        }
+
+        loadConsultations();
+        window.onclick = function(event) {
+            const modal = document.getElementById('consultationModal');
+            if (event.target === modal) modal.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
